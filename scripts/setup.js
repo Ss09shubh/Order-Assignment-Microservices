@@ -2,6 +2,7 @@ const { sequelize } = require('../db/config');
 const Vendor = require('../db/models/Vendor');
 const Product = require('../db/models/Product');
 const Worker = require('../db/models/Worker');
+const Order = require('../db/models/Order');
 
 async function setupDatabase() {
   try {
