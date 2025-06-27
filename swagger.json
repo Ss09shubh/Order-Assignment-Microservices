@@ -1,0 +1,993 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Order Processing Platform API",
+    "version": "1.0.0",
+    "description": "Stock aggregation and order processing system"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Vendor": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "vendor_id": { "type": "string", "example": "vendor_a", "description": "Unique vendor identifier" },
+          "name": { "type": "string", "example": "Tech Solutions Inc" },
+          "api_url": { "type": "string", "example": "http://localhost:3001" },
+          "status": { "type": "string", "enum": ["active", "inactive"], "example": "active" },
+          "created_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" }
+        }
+      },
+      "VendorRequest": {
+        "type": "object",
+        "required": ["vendor_id", "name"],
+        "properties": {
+          "vendor_id": { 
+            "type": "string", 
+            "example": "vendor_d", 
+            "description": "Unique vendor identifier (e.g., 'vendor_a', 'vendor_xyz')"
+          },
+          "name": { 
+            "type": "string", 
+            "example": "Digital Supplies Co" 
+          },
+          "api_url": { 
+            "type": "string", 
+            "example": "http://localhost:3004" 
+          },
+          "status": { 
+            "type": "string", 
+            "enum": ["active", "inactive"], 
+            "default": "active",
+            "example": "active"
+          }
+        },
+        "example": {
+          "vendor_id": "vendor_d",
+          "name": "Digital Supplies Co",
+          "api_url": "http://localhost:3004",
+          "status": "active"
+        }
+      },
+      "VendorUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Updated Company Name" },
+          "api_url": { "type": "string", "example": "http://localhost:3004" },
+          "status": { "type": "string", "enum": ["active", "inactive"], "example": "active" }
+        },
+        "example": {
+          "name": "Updated Company Name",
+          "api_url": "http://localhost:3004",
+          "status": "active"
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "product_id": { "type": "string", "example": "PROD001", "description": "Unique product identifier" },
+          "name": { "type": "string", "example": "Laptop" },
+          "vendor_id": { "type": "string", "example": "vendor_a", "description": "Vendor identifier" },
+          "stock_quantity": { "type": "integer", "example": 50 },
+          "price": { "type": "number", "example": 999.99 },
+          "created_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" }
+        }
+      },
+      "ProductRequest": {
+        "type": "object",
+        "required": ["product_id", "name", "vendor_id", "stock_quantity", "price"],
+        "properties": {
+          "product_id": { 
+            "type": "string", 
+            "example": "PROD123", 
+            "description": "Unique product identifier (e.g., 'PROD001', 'SKU12345')"
+          },
+          "name": { 
+            "type": "string", 
+            "example": "Wireless Mouse" 
+          },
+          "vendor_id": { 
+            "type": "string", 
+            "example": "vendor_b", 
+            "description": "Vendor identifier (e.g., 'vendor_a')"
+          },
+          "stock_quantity": { 
+            "type": "integer", 
+            "minimum": 0, 
+            "example": 50,
+            "description": "Initial stock quantity (≥ 0)"
+          },
+          "price": { 
+            "type": "number", 
+            "minimum": 0, 
+            "example": 29.99,
+            "description": "Product price (> 0)"
+          }
+        },
+        "example": {
+          "product_id": "PROD123",
+          "name": "Wireless Mouse",
+          "vendor_id": "vendor_b",
+          "stock_quantity": 50,
+          "price": 29.99
+        }
+      },
+      "ProductUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Updated Product Name" },
+          "stock_quantity": { "type": "integer", "minimum": 0, "example": 75 },
+          "price": { "type": "number", "minimum": 0, "example": 34.99 }
+        },
+        "example": {
+          "name": "Updated Product Name",
+          "stock_quantity": 75,
+          "price": 34.99
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "example": "1637012345678", "description": "System-generated order ID" },
+          "product_id": { "type": "string", "example": "PROD001" },
+          "quantity": { "type": "integer", "example": 2 },
+          "status": { "type": "string", "enum": ["pending", "completed", "failed"], "example": "completed" },
+          "total_price": { "type": "number", "example": 1999.98 },
+          "created_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "required": ["product_id", "quantity"],
+        "properties": {
+          "product_id": { 
+            "type": "string", 
+            "example": "PROD001",
+            "description": "Product identifier (e.g., 'PROD001')"
+          },
+          "quantity": { 
+            "type": "integer", 
+            "minimum": 1, 
+            "example": 2,
+            "description": "Order quantity (must be > 0)"
+          }
+        },
+        "example": {
+          "product_id": "PROD001",
+          "quantity": 2
+        }
+      },
+      "Worker": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "worker_id": { "type": "string", "example": "WORK001", "description": "Unique worker identifier" },
+          "name": { "type": "string", "example": "John Doe" },
+          "status": { "type": "string", "enum": ["active", "inactive", "busy"], "example": "active" },
+          "vendor_id": { "type": "string", "example": "vendor_a" },
+          "created_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2023-11-15T12:30:00.000Z" }
+        }
+      },
+      "WorkerRequest": {
+        "type": "object",
+        "required": ["worker_id", "name", "vendor_id"],
+        "properties": {
+          "worker_id": { 
+            "type": "string", 
+            "example": "WORK005",
+            "description": "Unique worker identifier (e.g., 'WORK001', 'EMP123')"
+          },
+          "name": { 
+            "type": "string", 
+            "example": "Sarah Johnson" 
+          },
+          "vendor_id": { 
+            "type": "string", 
+            "example": "vendor_b",
+            "description": "Vendor identifier (e.g., 'vendor_a')"
+          },
+          "status": { 
+            "type": "string", 
+            "enum": ["active", "inactive", "busy"], 
+            "default": "active",
+            "example": "active"
+          }
+        },
+        "example": {
+          "worker_id": "WORK005",
+          "name": "Sarah Johnson",
+          "vendor_id": "vendor_b",
+          "status": "active"
+        }
+      },
+      "WorkerUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Updated Worker Name" },
+          "status": { "type": "string", "enum": ["active", "inactive", "busy"], "example": "busy" },
+          "vendor_id": { "type": "string", "example": "vendor_c" }
+        },
+        "example": {
+          "name": "Updated Worker Name",
+          "status": "busy",
+          "vendor_id": "vendor_c"
+        }
+      },
+      "StockSync": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Stock synchronized successfully for vendor vendor_a" },
+          "products": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Product" }
+          }
+        }
+      },
+      "StockSyncAll": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Stock synchronization completed" },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vendor_id": { "type": "string", "example": "vendor_a" },
+                "success": { "type": "boolean", "example": true },
+                "products": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Product" }
+                },
+                "error": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "OK" },
+          "timestamp": { "type": "string", "example": "2023-11-15T12:34:56.789Z" },
+          "server": { "type": "string", "example": "Order Processing Platform" },
+          "version": { "type": "string", "example": "1.0.0" },
+          "connections": {
+            "type": "object",
+            "properties": {
+              "database": { "type": "string", "example": "connected" },
+              "rabbitmq": { "type": "string", "example": "connected" }
+            }
+          }
+        }
+      },
+      "ServerStatus": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "example": "online" },
+              "uptime": { "type": "number", "example": 3600.45 },
+              "started": { "type": "string", "example": "2023-11-15T12:30:00.000Z" }
+            }
+          },
+          "database": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "example": "connected" }
+            }
+          },
+          "rabbitmq": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "example": "connected" }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Missing required fields" },
+          "required_fields": {
+            "type": "object",
+            "example": {
+              "product_id": "Unique product identifier (e.g., 'PROD001', 'SKU12345')",
+              "name": "Product name",
+              "vendor_id": "Vendor identifier (e.g., 'vendor_a')",
+              "stock_quantity": "Initial stock quantity (≥ 0)",
+              "price": "Product price (> 0)"
+            }
+          },
+          "example": {
+            "type": "object",
+            "example": {
+              "product_id": "PROD123",
+              "name": "Wireless Mouse",
+              "vendor_id": "vendor_b",
+              "stock_quantity": 50,
+              "price": 29.99
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request with detailed error information",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "System health status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthCheck" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "Server status",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Detailed server status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ServerStatus" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stock/sync": {
+      "get": {
+        "summary": "Sync stock from all vendors",
+        "tags": ["Stock"],
+        "responses": {
+          "200": {
+            "description": "Stock synchronized successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StockSyncAll" }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/stock/sync/{vendorId}": {
+      "get": {
+        "summary": "Sync stock from specific vendor",
+        "tags": ["Stock"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock synchronized successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StockSync" }
+              }
+            }
+          },
+          "404": { "description": "Vendor not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/stock/{vendorId}": {
+      "get": {
+        "summary": "Get stock for specific vendor",
+        "tags": ["Stock"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor stock",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Product" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/vendors": {
+      "get": {
+        "summary": "Get all vendors",
+        "tags": ["Vendors"],
+        "responses": {
+          "200": {
+            "description": "List of all vendors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Vendor" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      },
+      "post": {
+        "summary": "Create a new vendor",
+        "tags": ["Vendors"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VendorRequest" },
+              "example": {
+                "vendor_id": "vendor_d",
+                "name": "Digital Supplies Co",
+                "api_url": "http://localhost:3004",
+                "status": "active"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Vendor created successfully" },
+                    "vendor": { "$ref": "#/components/schemas/Vendor" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/vendors/{vendorId}": {
+      "get": {
+        "summary": "Get vendor by ID",
+        "tags": ["Vendors"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Vendor" }
+              }
+            }
+          },
+          "404": { "description": "Vendor not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "summary": "Update vendor",
+        "tags": ["Vendors"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VendorUpdate" },
+              "example": {
+                "name": "Updated Company Name",
+                "api_url": "http://localhost:3004",
+                "status": "active"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vendor updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Vendor updated successfully" },
+                    "vendor": { "$ref": "#/components/schemas/Vendor" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Vendor not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "summary": "Delete vendor",
+        "tags": ["Vendors"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Vendor deleted successfully" },
+          "404": { "description": "Vendor not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/vendors/{vendorId}/workers": {
+      "get": {
+        "summary": "Get workers by vendor",
+        "tags": ["Vendors"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": { "type": "string", "example": "vendor_a" },
+            "description": "Vendor identifier (e.g., vendor_a)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of workers for vendor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Worker" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "summary": "Get all products",
+        "tags": ["Products"],
+        "responses": {
+          "200": {
+            "description": "List of all products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Product" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      },
+      "post": {
+        "summary": "Create a new product",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductRequest" },
+              "example": {
+                "product_id": "PROD123",
+                "name": "Wireless Mouse",
+                "vendor_id": "vendor_b",
+                "stock_quantity": 50,
+                "price": 29.99
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Product created successfully" },
+                    "product": { "$ref": "#/components/schemas/Product" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/products/{productId}": {
+      "get": {
+        "summary": "Get product by ID",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": { "type": "string", "example": "PROD001" },
+            "description": "Product identifier (e.g., PROD001)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          },
+          "404": { "description": "Product not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "summary": "Update product",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": { "type": "string", "example": "PROD001" },
+            "description": "Product identifier (e.g., PROD001)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductUpdate" },
+              "example": {
+                "name": "Updated Product Name",
+                "stock_quantity": 75,
+                "price": 34.99
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Product updated successfully" },
+                    "product": { "$ref": "#/components/schemas/Product" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Product not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "summary": "Delete product",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": { "type": "string", "example": "PROD001" },
+            "description": "Product identifier (e.g., PROD001)"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Product deleted successfully" },
+          "404": { "description": "Product not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "summary": "Get all orders",
+        "tags": ["Orders"],
+        "responses": {
+          "200": {
+            "description": "List of all orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Order" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/order": {
+      "post": {
+        "summary": "Place a new order",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderRequest" },
+              "example": {
+                "product_id": "PROD001",
+                "quantity": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order placed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Order placed successfully" },
+                    "order": { "$ref": "#/components/schemas/Order" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/order/{orderId}": {
+      "get": {
+        "summary": "Get order status",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": { "type": "string", "example": "1637012345678" },
+            "description": "Order identifier (system-generated)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          },
+          "404": { "description": "Order not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/workers": {
+      "get": {
+        "summary": "Get all workers",
+        "tags": ["Workers"],
+        "responses": {
+          "200": {
+            "description": "List of all workers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Worker" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error" }
+        }
+      },
+      "post": {
+        "summary": "Create a new worker",
+        "tags": ["Workers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkerRequest" },
+              "example": {
+                "worker_id": "WORK005",
+                "name": "Sarah Johnson",
+                "vendor_id": "vendor_b",
+                "status": "active"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Worker created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Worker created successfully" },
+                    "worker": { "$ref": "#/components/schemas/Worker" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/workers/{workerId}": {
+      "get": {
+        "summary": "Get worker by ID",
+        "tags": ["Workers"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": { "type": "string", "example": "WORK001" },
+            "description": "Worker identifier (e.g., WORK001)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Worker details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Worker" }
+              }
+            }
+          },
+          "404": { "description": "Worker not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "put": {
+        "summary": "Update worker",
+        "tags": ["Workers"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": { "type": "string", "example": "WORK001" },
+            "description": "Worker identifier (e.g., WORK001)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkerUpdate" },
+              "example": {
+                "name": "Updated Worker Name",
+                "status": "busy",
+                "vendor_id": "vendor_c"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Worker updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Worker updated successfully" },
+                    "worker": { "$ref": "#/components/schemas/Worker" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Worker not found" },
+          "500": { "description": "Server error" }
+        }
+      },
+      "delete": {
+        "summary": "Delete worker",
+        "tags": ["Workers"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workerId",
+            "required": true,
+            "schema": { "type": "string", "example": "WORK001" },
+            "description": "Worker identifier (e.g., WORK001)"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Worker deleted successfully" },
+          "404": { "description": "Worker not found" },
+          "500": { "description": "Server error" }
+        }
+      }
+    }
+  }
+}
